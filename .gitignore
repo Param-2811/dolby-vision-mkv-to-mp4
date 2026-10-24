@@ -1,0 +1,11 @@
+# third-party binaries: fetched by build.ps1, never committed
+tools/
+# build output
+build/
+dist/
+*.spec
+DV-Converter-win64.zip
+__pycache__/
+# local dev notes / original AI prompt, not part of the app
+Context.md
+Markdown.md
