@@ -2,7 +2,11 @@
 
 A small Windows app that remuxes **Dolby Vision MKV** files into MP4 files that LG webOS TVs,
 Apple devices and Android TV will actually play — including **Profile 7 → Profile 8.1**
-conversion, which is the part most TVs choke on.
+conversion (DV7 → DV8), which is the part most TVs choke on.
+
+**No Docker, no command line, no hunting for the right version of six different tools.** One
+installer, a window with tick boxes, and ffmpeg, dovi_tool, MP4Box and hdr10plus_tool already
+inside it.
 
 **The video is never re-encoded.** It is copied bit for bit into the new container, so there is
 no quality loss and no waiting: a 4.95 GB, 40-minute 4K Dolby Vision episode finished in
@@ -162,6 +166,28 @@ The app is **MIT** licensed. The bundled tools keep their own licences — see
   Apple TV falls back to HDR10 for Profile 8.
 - **Android / Android TV**: DV 8.1 MP4 direct-plays on Shield, Google TV and DV-capable phones.
   Use Just Player or Plex if the stock player ignores the DV metadata.
+
+## How this compares
+
+The Dolby Vision tooling that exists is excellent, and this app stands on it — `dovi_tool` and
+MP4Box do the hard parts here too. What is missing from the ecosystem is a **native Windows
+application**: everything else is a script, a container, or macOS-only.
+
+| | **This app** | [gacopl/dvmkv2mp4](https://github.com/gacopl/dvmkv2mp4) | [R3S3t9999/DoVi_Scripts](https://github.com/R3S3t9999/DoVi_Scripts) | [nekno/DV7toDV8](https://github.com/nekno/DV7toDV8) |
+|---|---|---|---|---|
+| Platform | Windows 10/11 | Linux, macOS, experimental x64-Linux Docker | Windows | macOS |
+| Interface | Desktop app, tick boxes | Command line | Drag-and-drop scripts | Command line |
+| Setup | One installer; every tool bundled | Install ffmpeg 4.4, mp4box **1.0.1 exactly**, dovi_tool, hdr10plus_tool, mediainfo v21, dotnet6, jq, bc yourself | Download the script pack and its tools | Its own tool chain |
+| Free space needed | about the size of the output | "3x Size of free space for file you want to convert" | — | — |
+| Batch track picking by language | yes | — | — | — |
+
+If you are on Linux or macOS, use one of those — they are mature and they do more. This one is
+for the Windows user who wants to double-click something.
+
+**Searching for any of these?** That is what this does: *DV7 to DV8 on Windows*, *dovi_tool GUI*,
+*convert Dolby Vision MKV for an LG C2 / C3 / C4 OLED*, *Dolby Vision MP4 for Apple TV or Infuse*,
+*Profile 7 FEL to 8.1*, *MKV to MP4 without re-encoding*, *keep HDR and Dolby Vision when
+converting to MP4*.
 
 ## Run from source
 
