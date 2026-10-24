@@ -35,23 +35,35 @@ Downloads any missing tool into `tools\`, builds the exe with PyInstaller, and w
 `dist\DV Converter\` plus `DV-Converter-win64.zip`. Needs Python 3.10+ and internet
 on the first run.
 
-Files can be **dragged and dropped** onto the list (folders too - their .mkv files are added).
+Files can be **dragged and dropped** onto the window (folders too - their .mkv files are added).
+
+## The file list
+
+Every file you add is probed once and shown as a row:
+
+| FILE | SOURCE | OUTPUT | AUDIO | SUBTITLES | STATUS |
+|------|--------|--------|-------|-----------|--------|
+| Lanterns.2024.mkv | DV 7.6 | DV 8.1 | 1 of 3 | 2 of 8 | ready |
+
+**SOURCE** is what the file is now, **OUTPUT** is what it will become, and **STATUS** follows
+each file through the run: waiting, converting, done, failed.
 
 ## Picking tracks
 
-Select one or more files, and two panels appear: **Audio tracks** and **Subtitle tracks**.
-Green = kept, click a row to toggle. Each panel has its own quick picks:
+Select one or more files and the **Audio** and **Subtitles** panels fill up. A ticked box means
+the track is kept; click a row (or press Space) to drop it. Each panel has quick picks:
 
-- Audio: All / None / **Hindi only** / English only
-- Subtitles: All / None / **Hindi + English** / English only / Hindi only
+- Audio: All / None / **Hindi** / English
+- Subtitles: All / None / **Hindi + English** / Hindi / English
 
-**Batch:** select several files (or press *Select all files*) and one click on a quick pick
-applies that choice to every selected file. Track numbers differ between releases, so the
-choice is matched by language in each file, not by position.
-*Copy these track choices to ALL files* takes the languages you picked by hand on the shown
-file and applies the same languages everywhere.
+**Batch:** select several files (or press *Select all*) and one click on a quick pick applies
+that choice to every selected file. Track numbers differ between releases, so the choice is
+matched by language in each file, not by position.
+*Apply these choices to all files* takes the languages ticked on the shown file and applies the
+same languages everywhere.
 
 Choices are remembered per file. Track titles (e.g. "American English [SDH]") carry into the MP4.
+The log lives behind **Show log** at the bottom and opens by itself when something fails.
 
 ## What it does (decision table)
 
