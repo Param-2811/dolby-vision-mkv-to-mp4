@@ -4,9 +4,10 @@ A small Windows app that remuxes **Dolby Vision MKV** files into MP4 files that 
 Apple devices and Android TV will actually play — including **Profile 7 → Profile 8.1**
 conversion, which is the part most TVs choke on.
 
-**The video is never re-encoded.** It is copied bit for bit, so there is no quality loss and a
-4K film takes a couple of minutes instead of a couple of hours. Your original files are never
-touched; output goes to a folder you choose.
+**The video is never re-encoded.** It is copied bit for bit into the new container, so there is
+no quality loss and no waiting: a 4.95 GB, 40-minute 4K Dolby Vision episode finished in
+**12 seconds** on an ordinary laptop. Your original files are never touched; output goes to a
+folder you choose.
 
 ![The app with four files loaded](docs/screenshot-main.png)
 
@@ -16,6 +17,42 @@ An LG C-series TV plays Dolby Vision beautifully — but its built-in player wan
 DV Profile 5, 8.1 or 8.4 and EAC3 audio. A UHD Blu-ray rip is usually MKV with **Profile 7**
 and TrueHD, and nothing plays it directly. The fix is a known pipeline of three command-line
 tools with a dozen flags between them. This app is that pipeline with a window around it.
+
+## Minutes, not hours
+
+Most "MKV to MP4 converters" **re-encode**: they decode every frame and compress it again.
+That is why a 4K film can take an afternoon, and why it comes out looking slightly worse than
+it went in.
+
+This app changes the container, not the video. The video stream is **copied** — the same bytes,
+written into MP4 — so the job is limited by how fast your disk reads and writes, not by your CPU.
+
+Measured end to end with this app, on a normal laptop:
+
+| | |
+|---|---|
+| Source | 4.95 GB · 39.8 min · 4K Dolby Vision Profile 5 · 16.5 Mb/s |
+| Time | **12 seconds** |
+| Speed | **200× realtime**, 413 MB/s |
+| Output | 4.95 GB — same video stream, MediaInfo reports `Dolby Vision, Profile 5, dvhe.05.06, BL+RPU` |
+
+For comparison, [HandBrake's own published benchmark](https://handbrake.fr/docs/en/1.8.0/technical/performance.html)
+encodes 4K H.265 at **0.33× realtime** — and that is on a 22-core Xeon E5-2699 v4 workstation
+with 32 GB of RAM. The same 40-minute episode would take roughly **two hours** there. On
+ordinary desktops, users report [14 to 30 hours](https://forum.makemkv.com/forum/viewtopic.php?p=61923)
+for a single 4K film.
+
+**12 seconds instead of ~2 hours, and the picture is bit-for-bit identical.**
+
+Two honest footnotes:
+
+- **Profile 7 → 8.1 is slower than a plain remux.** The stream is passed through `dovi_tool`
+  and MP4Box before the final mux, so it is a few passes over the file — minutes, not seconds,
+  for a disc rip. Still no re-encoding: every pass copies the video.
+- Re-encoding is not just slow, it usually **destroys the Dolby Vision metadata**. HandBrake
+  passes DV through only for SVT-AV1 and, on macOS, the VideoToolbox H.265 encoder —
+  [not x265 or NVENC](https://github.com/HandBrake/HandBrake/releases/tag/1.8.0). Re-encode a
+  DV file with those and you get a file that plays, without Dolby Vision.
 
 ## Features
 
@@ -29,8 +66,11 @@ tools with a dozen flags between them. This app is that pipeline with a window a
 - **Batch track picking.** Select every file, click **Hindi**, and each file keeps its own Hindi
   track — matched **by language**, not by track number, because track order differs between
   releases.
-- **Audio that MP4 cannot carry is converted** — TrueHD, DTS, FLAC and PCM become EAC3 5.1 at
-  768 kbps. EAC3, AC3 and AAC are copied untouched.
+- **Your call on audio: keep it lossless, or make it play everywhere.** Leave the box ticked and
+  TrueHD, DTS, FLAC and PCM become **EAC3 5.1 at 768 kbps**, which every TV, phone and Plex
+  client decodes. Untick it and the **original lossless track is copied through bit-perfect** —
+  nothing is re-encoded — though MP4 is a poor host for TrueHD and DTS, so the app warns you that
+  some players will not decode it. EAC3, AC3 and AAC are always copied untouched either way.
 - **Subtitles**: SRT and ASS become MP4 text subtitles, with their titles and languages kept.
   PGS and VobSub are image formats MP4 cannot hold, so they are skipped with a warning.
 - **Drag and drop** files or whole folders onto the window.
@@ -67,7 +107,7 @@ To remove it: **Settings → Apps → DV Converter**.
 | DV Profile 5 | Kept as-is (tagged `dvh1`), with a warning that the player must support P5 |
 | HDR10 / HDR10+ only | Plain remux |
 | HDR10+ **and** Dolby Vision | Both kept, with a warning that players handle this inconsistently |
-| TrueHD / DTS / FLAC / PCM audio | Converted to EAC3 5.1, 768 kbps |
+| TrueHD / DTS / FLAC / PCM audio | Converted to EAC3 5.1, 768 kbps — or copied through losslessly if you untick the audio box |
 | EAC3 / AC3 / AAC audio | Copied untouched |
 | SRT / ASS subtitles | Converted to MP4 text subtitles (`mov_text`) |
 | PGS / VobSub subtitles | Skipped, with a warning |

@@ -292,7 +292,7 @@ class App(TkBase):
         except Exception: pass    # the installer looks for this to tell the user to close the app
         try: self.iconbitmap(os.path.join(HERE, "icon.ico"))
         except Exception: pass    # running from a checkout without the icon is fine
-        self.title("Dolby Vision to MP4")
+        self.title("Dolby Vision MKV to MP4")
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
         self.geometry(f"{min(1240, sw - 120)}x{min(980, sh - 90)}+60+16")
         self.minsize(900, 640)
@@ -400,7 +400,7 @@ class App(TkBase):
     # ---- layout -----------------------------------------------------------
     def build_header(self):
         bar = ttk.Frame(self); bar.grid(row=0, column=0, sticky="ew", padx=24, pady=(14, 10))
-        ttk.Label(bar, text="Dolby Vision to MP4", style="Title.TLabel").pack(side="left")
+        ttk.Label(bar, text="Dolby Vision MKV to MP4", style="Title.TLabel").pack(side="left")
         self.tools_lbl = ttk.Label(bar, text="", style="Chip.TLabel")
         self.tools_lbl.pack(side="right")
         rule(self).grid(row=1, column=0, sticky="ew")
