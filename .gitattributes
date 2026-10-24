@@ -1,0 +1,6 @@
+# keep line endings sane across machines: LF in the repo, native in the working tree
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary
