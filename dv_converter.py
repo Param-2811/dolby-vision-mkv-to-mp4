@@ -288,6 +288,10 @@ class App(TkBase):
         super().__init__()
         try: __import__("ctypes").windll.shcore.SetProcessDpiAwareness(1)  # crisp on HiDPI
         except Exception: pass
+        try: __import__("ctypes").windll.kernel32.CreateMutexW(None, False, "DVConverterRunning")
+        except Exception: pass    # the installer looks for this to tell the user to close the app
+        try: self.iconbitmap(os.path.join(HERE, "icon.ico"))
+        except Exception: pass    # running from a checkout without the icon is fine
         self.title("Dolby Vision to MP4")
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
         self.geometry(f"{min(1240, sw - 120)}x{min(980, sh - 90)}+60+16")

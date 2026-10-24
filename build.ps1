@@ -1,7 +1,7 @@
-<#  build.ps1 - makes dist\DV Converter\ (portable app) and DV-Converter-win64.zip
+<#  build.ps1 - makes dist\DV Converter\ (the app) and DV-Converter-1.0.0-setup.exe
 
     Needs: Python 3.10+ on PATH, internet on the first run (it downloads ffmpeg,
-    dovi_tool and hdr10plus_tool into tools\), and winget only if MP4Box is missing.
+    dovi_tool and hdr10plus_tool into tools\), and winget if MP4Box or Inno Setup is missing.
     Run:   powershell -ExecutionPolicy Bypass -File build.ps1
 #>
 $ErrorActionPreference = 'Stop'
@@ -59,16 +59,26 @@ foreach ($t in 'ffmpeg', 'ffprobe', 'dovi_tool', 'hdr10plus_tool', 'mp4box') {
 python -m pip install --quiet --upgrade pyinstaller tkinterdnd2
 if ($LASTEXITCODE) { throw 'pip install failed' }
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
-python -m PyInstaller --noconfirm --clean --windowed --name 'DV Converter' --collect-all tkinterdnd2 dv_converter.py
+python -m PyInstaller --noconfirm --clean --windowed --name 'DV Converter' --icon icon.ico --collect-all tkinterdnd2 dv_converter.py
 if ($LASTEXITCODE) { throw 'PyInstaller failed' }
 
-# ---- 3. portable folder + zip --------------------------------------------
+# ---- 3. the app folder ----------------------------------------------------
 $out = 'dist\DV Converter'
 New-Item -ItemType Directory -Force "$out\tools" | Out-Null
 Copy-Item (Get-ChildItem $tools -File).FullName "$out\tools" -Force   # -File skips the unpruned tools\gpac\
-Copy-Item 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'Stop DV Converter.bat' $out -Force
+Copy-Item 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'icon.ico', 'Stop DV Converter.bat' $out -Force
 
-$zip = 'DV-Converter-win64.zip'
-Remove-Item $zip -ErrorAction SilentlyContinue
-Compress-Archive "$out\*" $zip
-Write-Host ("done: {0} ({1:N0} MB)" -f $zip, ((Get-Item $zip).Length / 1MB))
+# ---- 4. the installer -----------------------------------------------------
+$iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+        "$env:ProgramFiles\Inno Setup 6\ISCC.exe" | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $iscc) {
+    Write-Host 'installing Inno Setup via winget ...'
+    winget install -e --id JRSoftware.InnoSetup --accept-package-agreements --accept-source-agreements
+    $iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" |
+            Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+if (-not $iscc) { throw 'Inno Setup not found - install it from https://jrsoftware.org/isdl.php and run this again' }
+& $iscc /Q installer.iss
+if ($LASTEXITCODE) { throw 'Inno Setup failed' }
+$setup = Get-Item 'DV-Converter-*-setup.exe'
+Write-Host ("done: {0} ({1:N0} MB)" -f $setup.Name, ($setup.Length / 1MB))

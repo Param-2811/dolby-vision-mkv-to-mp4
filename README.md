@@ -6,12 +6,17 @@ originals are never touched, output goes to a separate folder.
 
 ## Install (Windows 10/11, 64-bit)
 
-1. Download `DV-Converter-win64.zip` from [Releases](../../releases/latest).
-2. Unzip it anywhere (e.g. `C:\DV Converter`) - **not** inside the ZIP viewer.
-3. Double-click **DV Converter.exe**.
+1. Download **DV-Converter-1.0.0-setup.exe** from [Releases](../../releases/latest).
+2. Run it. No admin password: it installs for your user only (you can switch to
+   "all users" in the first dialog if you want it machine-wide).
+3. Start it from the Start menu, or tick the desktop shortcut during setup.
 
-No Python, no installer, no admin rights. ffmpeg, MP4Box, dovi_tool and hdr10plus_tool
-are inside the `tools` folder next to the exe. Delete the folder to uninstall.
+ffmpeg, MP4Box, dovi_tool and hdr10plus_tool are installed alongside it, in a `tools`
+folder next to the app - nothing else is touched and nothing is downloaded at runtime.
+To remove it: Settings - Apps - DV Converter, or the uninstaller in the install folder.
+
+Windows SmartScreen will warn the first time, because the installer is not code-signed
+(a certificate costs a few hundred dollars a year). Click **More info - Run anyway**.
 
 Then: add MKV files, pick a target device, press **Convert**.
 **Stop** cancels a running job (or run `Stop DV Converter.bat` from outside).
@@ -26,14 +31,15 @@ Tools are looked up in `tools\`, `tools\gpac\`, `C:\Program Files\GPAC`, the win
 package folders and `PATH` - in that order. `winget install Gyan.FFmpeg GPAC.GPAC` covers
 most of it; drop `dovi_tool.exe` and `hdr10plus_tool.exe` into `tools\`.
 
-## Build the release ZIP yourself
+## Build it yourself
 
 ```
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
-Downloads any missing tool into `tools\`, builds the exe with PyInstaller, and writes
-`dist\DV Converter\` plus `DV-Converter-win64.zip`. Needs Python 3.10+ and internet
-on the first run.
+Downloads any missing tool into `tools\`, builds the exe with PyInstaller, and compiles
+`DV-Converter-1.0.0-setup.exe` with [Inno Setup](https://jrsoftware.org/isinfo.php)
+(installed via winget if you don't have it). Needs Python 3.10+ and internet on the first run.
+`dist\DV Converter\` is left behind as a portable copy if you prefer that over the installer.
 
 Files can be **dragged and dropped** onto the window (folders too - their .mkv files are added).
 

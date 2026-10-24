@@ -4,7 +4,7 @@ tools/
 build/
 dist/
 *.spec
-DV-Converter-win64.zip
+DV-Converter-*-setup.exe
 __pycache__/
 # local dev notes / original AI prompt, not part of the app
 Context.md
