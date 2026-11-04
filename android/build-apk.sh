@@ -40,6 +40,6 @@ with zipfile.ZipFile(sys.argv[1], "a", zipfile.ZIP_DEFLATED) as z:
 E
 "$BT/zipalign.exe" -f 4 "$OUT/base.apk" "$OUT/aligned.apk"
 java -jar "$BT/lib/apksigner.jar" sign --ks "$KEY" --ks-pass "file:$PASS" \
-  --out "$OUT/DV-Converter-1.1.0-arm64.apk" "$OUT/aligned.apk"
+  --out "$OUT/DV-Converter-1.1.2-arm64.apk" "$OUT/aligned.apk"
 rm -f "$OUT"/*.idsig
 ls -la "$OUT"/*.apk

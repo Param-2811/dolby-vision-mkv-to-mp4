@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ final class ConvertSheet {
     private final MainActivity a;
     private final List<MainActivity.Item> items;
     private final LinearLayout body;
+    private final Map<String, String> tapped = new HashMap<>();
+    private final Map<String, Integer> chipScroll = new HashMap<>();
     private Dialog dialog;
 
     ConvertSheet(MainActivity a, List<MainActivity.Item> items) {
@@ -52,8 +55,8 @@ final class ConvertSheet {
         Predicate<Pipeline.Track> hin = t -> t.isLang("hin", "hindi"), eng = t -> t.isLang("eng", "english");
         kind("audio", "Audio", new String[]{"All", "None", "Hindi", "English"},
                 Arrays.asList(t -> true, t -> false, hin, eng));
-        kind("subtitle", "Subtitles", new String[]{"All", "None", "Hindi + English", "Hindi", "English"},
-                Arrays.asList(t -> true, t -> false, hin.or(eng), hin, eng));
+        kind("subtitle", "Subtitles", new String[]{"All", "None", "Hindi", "English"},
+                Arrays.asList(t -> true, t -> false, hin, eng));
     }
 
     private void header() {
@@ -93,7 +96,24 @@ final class ConvertSheet {
         return true;
     }
 
-    private void apply(String kind, Predicate<Pipeline.Track> rule) {
+    /** Language chips only appear when a video has tracks in that language. */
+    private boolean available(int chip, List<Pipeline.Track> tracks, Predicate<Pipeline.Track> rule) {
+        return chip < 2 || tracks.stream().anyMatch(t -> !t.bitmap() && rule.test(t));
+    }
+
+    /** Several chips can select the same tracks, so the one the user tapped wins while it still fits. */
+    private String lit(String kind, String[] names, List<Predicate<Pipeline.Track>> rules, List<Pipeline.Track> tracks) {
+        String first = null;
+        for (int i = 0; i < names.length; i++) {
+            if (!available(i, tracks, rules.get(i)) || !matches(kind, rules.get(i))) continue;
+            if (names[i].equals(tapped.get(kind))) return names[i];
+            if (first == null) first = names[i];
+        }
+        return first;
+    }
+
+    private void apply(String kind, String name, Predicate<Pipeline.Track> rule) {
+        tapped.put(kind, name);
         for (MainActivity.Item it : items)
             for (Pipeline.Track t : it.info.tracks) {
                 if (!t.kind.equals(kind)) continue;
@@ -120,18 +140,23 @@ final class ConvertSheet {
         LinearLayout chips = new LinearLayout(a);
         chips.setGravity(Gravity.CENTER_VERTICAL);
         chips.setPadding(Ui.dp(a, 24), 0, Ui.dp(a, 16), 0);
-        boolean oneOn = false;
+        String on = lit(kind, names, rules, tracks);
         for (int i = 0; i < names.length; i++) {
             Predicate<Pipeline.Track> rule = rules.get(i);
-            boolean on = !oneOn && matches(kind, rule);    // only the first matching chip lights up
-            oneOn |= on;
-            TextView chip = Ui.chip(a, names[i], on, v -> apply(kind, rule));
+            if (!available(i, tracks, rule)) continue;
+            String name = names[i];
+            TextView chip = Ui.chip(a, name, name.equals(on), v -> {
+                chipScroll.put(kind, scroll.getScrollX());
+                apply(kind, name, rule);
+            });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, Ui.dp(a, 32));
             lp.setMargins(0, Ui.dp(a, 8), Ui.dp(a, 8), Ui.dp(a, 8));
             chips.addView(chip, lp);
         }
         scroll.addView(chips);
         body.addView(scroll);
+        int x = chipScroll.getOrDefault(kind, 0);
+        scroll.post(() -> scroll.scrollTo(x, 0));
         if (items.size() == 1) trackRows(kind); else languageRows(kind);
     }
 

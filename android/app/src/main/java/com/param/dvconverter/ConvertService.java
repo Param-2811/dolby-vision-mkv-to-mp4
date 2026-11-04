@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo;
 import android.graphics.drawable.Icon;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
 
@@ -148,6 +149,12 @@ public class ConvertService extends Service {
         return f;
     }
 
+    /** One folder people can find in Files. Rename needs the same volume, so USB sources keep theirs beside the MP4. */
+    private static File unfinishedDir(File src, File outdir) {
+        if (!src.getPath().startsWith(Environment.getExternalStorageDirectory().getPath())) return outdir;
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "DV Converter Unfinished");
+    }
+
     private void showPercent(int v) {
         if (v == percent) return;
         percent = v;
@@ -162,7 +169,9 @@ public class ConvertService extends Service {
         if (outdir.getUsableSpace() < j.src.length()) throw new IOException("Not enough free space for " + j.src.getName());
         String base = j.src.getName().replaceFirst("\\.[^.]+$", "");
         File dst = freeName(outdir, base);
-        File part = new File(outdir, dst.getName().replaceFirst("\\.mp4$", "") + ".part.mp4");
+        File unfinished = unfinishedDir(j.src, outdir);
+        if (!unfinished.isDirectory() && !unfinished.mkdirs()) throw new IOException("Cannot create " + unfinished);
+        File part = new File(unfinished, dst.getName().replaceFirst("\\.mp4$", "") + ".part.mp4");
 
         List<String> warn = new ArrayList<>();
         List<String> args = Pipeline.buildMux(j.info, j.src.getPath(), part.getPath(), j.skip, convertAudio, subs, warn);

@@ -320,9 +320,9 @@ public class MainActivity extends Activity {
         scanning = true;
         refreshChrome();
         new Thread(() -> {
-            List<File> found = new ArrayList<>();
+            List<File> found = new ArrayList<>(), parts = new ArrayList<>();
             for (StorageVolume v : getSystemService(StorageManager.class).getStorageVolumes()) {
-                if (v.getDirectory() != null) walk(v.getDirectory(), found);
+                if (v.getDirectory() != null) walk(v.getDirectory(), found, parts);
             }
             found.sort((x, y) -> Long.compare(y.lastModified(), x.lastModified()));
             ui.post(() -> {
@@ -338,18 +338,32 @@ public class MainActivity extends Activity {
                 selected.retainAll(items);
                 adapter.notifyDataSetChanged();
                 refreshChrome();
+                offerCleanup(parts);
             });
         }).start();
     }
 
-    private static void walk(File dir, List<File> out) {
+    /** A killed conversion cannot resume, so its file is only wasted space. The choice stays with the user. */
+    private void offerCleanup(List<File> parts) {
+        if (parts.isEmpty() || ConvertService.running) return;
+        long bytes = 0;
+        for (File f : parts) bytes += f.length();
+        snack(Formatter.formatShortFileSize(this, bytes) + " in unfinished files", "Delete", () -> {
+            if (ConvertService.running) return;
+            for (File f : parts) f.delete();
+            snack("Unfinished files deleted", null, null);
+        });
+    }
+
+    private static void walk(File dir, List<File> out, List<File> parts) {
         File[] kids = dir.listFiles();
         if (kids == null) return;
         for (File f : kids) {
             String n = f.getName();
             if (f.isDirectory()) {
-                if (!n.startsWith(".") && !n.equals("Android")) walk(f, out);
+                if (!n.startsWith(".") && !n.equals("Android")) walk(f, out, parts);
             } else if (n.toLowerCase().endsWith(".mkv")) out.add(f);
+            else if (n.endsWith(".part.mp4")) parts.add(f);
         }
     }
 

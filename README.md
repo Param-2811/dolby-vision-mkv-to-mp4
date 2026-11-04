@@ -104,8 +104,8 @@ To remove it: **Settings → Apps → DV Converter**.
 
 ### Android
 
-**DV-Converter-1.1.0-arm64.apk** is on the
-[Android release](../../releases/tag/android-v1.1.0) for ARM64 phones on Android 13 or newer.
+**DV-Converter-1.1.2-arm64.apk** is on the
+[Android release](../../releases/tag/android-v1.1.2) for ARM64 phones on Android 13 or newer.
 Open it on the phone and allow installing from that app. It is not on the Play Store, and it
 asks for All Files access because ffmpeg needs real file paths.
 
