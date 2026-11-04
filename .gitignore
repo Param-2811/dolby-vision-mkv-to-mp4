@@ -9,3 +9,7 @@ __pycache__/
 # local dev notes / original AI prompt, not part of the app
 Context.md
 Markdown.md
+
+# Android build output; rebuilt by android/native/build-tools.sh and android/build-apk.sh
+android/build/
+android/app/src/main/jniLibs/

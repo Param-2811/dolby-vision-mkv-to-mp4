@@ -15,3 +15,15 @@ under their own licenses:
 The ffmpeg build is GPL v3, so the ZIP as a whole is distributed under GPL v3 terms;
 its complete source is at the links above. Nothing in this repository is GPL -
 `build.ps1` downloads those binaries at build time.
+
+## Android app
+
+The APK contains its own ffmpeg and ffprobe, which the app also runs as separate processes.
+They are built from the unmodified ffmpeg 8.1 source by `android/native/build-tools.sh`,
+without GPL components, and that script holds the exact configuration.
+
+| Component | License | Source |
+|-----------|---------|--------|
+| ffmpeg / ffprobe 8.1 | LGPL v2.1+ | https://ffmpeg.org/releases/ffmpeg-8.1.tar.xz |
+| musl libc (linked statically) | MIT | https://musl.libc.org |
+| Material Icons | Apache 2.0 | https://github.com/google/material-design-icons |

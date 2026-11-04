@@ -102,6 +102,16 @@ To remove it: **Settings → Apps → DV Converter**.
 > Windows SmartScreen will warn you the first time, because the installer is not code-signed
 > (a signing certificate costs a few hundred dollars a year). Click **More info → Run anyway**.
 
+### Android
+
+**DV-Converter-1.1.0-arm64.apk** is on the
+[Android release](../../releases/tag/android-v1.1.0) for ARM64 phones on Android 13 or newer.
+Open it on the phone and allow installing from that app. It is not on the Play Store, and it
+asks for All Files access because ffmpeg needs real file paths.
+
+The phone app remuxes Dolby Vision Profile 5 and 8. Profile 7 needs the Windows app, and files
+without Dolby Vision are listed but not converted.
+
 ## What it does, case by case
 
 | Source | Output MP4 |
@@ -214,6 +224,12 @@ portable copy if you prefer that to the installer.
 
 The whole app is one file — [`dv_converter.py`](dv_converter.py) — about 750 lines: the
 conversion pipeline at the top, the interface below it.
+
+## Build the Android app
+
+The app is plain Java, built with the Android SDK tools, without Gradle.
+`android/native/build-tools.sh` cross-compiles ffmpeg and ffprobe inside Alpine Linux, then
+`android/build-apk.sh` packages and signs the APK. `android/check.sh` runs the logic self-check.
 
 ## Credits
 
