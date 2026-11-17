@@ -81,6 +81,9 @@ Two honest footnotes:
 - **Every output is verified.** After muxing, the app re-probes the MP4 with ffprobe (and
   MediaInfo if installed) and prints the Dolby Vision profile it actually found.
 - **Stop means stop.** Cancelling kills the running tools and deletes the half-written file.
+- **Progress that never looks frozen.** The bar shows a percentage and a running clock. On a
+  Profile 7 rip it also tracks the `dovi_tool` pass, which is most of the job, so a long disc
+  rip keeps moving instead of sitting at 0%.
 - **Per-file status** through a batch: waiting → converting → done, or failed with the reason.
 
 ![Batch track picking across four files](docs/screenshot-tracks.png)
@@ -111,6 +114,10 @@ asks for All Files access because ffmpeg needs real file paths.
 
 The phone app remuxes Dolby Vision Profile 5 and 8. Profile 7 needs the Windows app, and files
 without Dolby Vision are listed but not converted.
+
+To save space on the phone, turn on **Delete the MKV after converting** in Conversion settings.
+It is off by default, and the MKV is deleted only after the MP4 is saved and its Dolby Vision
+profile matches the source.
 
 ## What it does, case by case
 
