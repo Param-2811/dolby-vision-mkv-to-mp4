@@ -1,7 +1,7 @@
 """DV MKV -> MP4 converter. Lossless remux, no video re-encode.
 Flow (community-proven): ffprobe -> [dovi_tool P7->8.1] -> [MP4Box tag] -> ffmpeg final mux -> verify.
 """
-import json, os, re, shutil, subprocess, sys, threading, queue, glob
+import json, os, re, shutil, subprocess, sys, threading, queue, glob, time
 import tkinter as tk
 import tkinter.font
 from tkinter import ttk, filedialog, messagebox
@@ -69,6 +69,11 @@ def dv_label(p):
 class Cancelled(Exception): pass
 
 
+# shortcut: rough shares of a Profile 7 job's time (dovi_tool, then MP4Box with no progress, then the mux);
+# measure a few real movies if the bar visibly jumps.
+P7_DOVI, P7_MUX = 40, 55
+
+
 class Job:
     procs = []      # live child processes, killed by App.stop()
     stop = False
@@ -83,13 +88,17 @@ class Job:
         if Job.stop: raise Cancelled()
         p = subprocess.Popen(*a, **k); Job.procs.append(p); return p
 
-    def ffmpeg_progress(self, cmd, duration):
+    def track(self, lines, duration, lo=0, hi=100):
+        """ffmpeg -progress lines -> the bar, scaled into lo..hi."""
+        for line in lines:
+            if line.startswith("out_time_us=") and duration:
+                try: self.progress(lo + min(99, int(line.split("=")[1]) / 1e6 / duration * 100) * (hi - lo) / 100)
+                except ValueError: pass
+
+    def ffmpeg_progress(self, cmd, duration, lo=0):
         p = self.popen(cmd + ["-progress", "pipe:1", "-nostats", "-loglevel", "error"],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace", **NOWIN)
-        for line in p.stdout:
-            if line.startswith("out_time_us=") and duration:
-                try: self.progress(min(99, int(line.split("=")[1]) / 1e6 / duration * 100))
-                except ValueError: pass
+        self.track(p.stdout, duration, lo)
         err = p.stderr.read()
         if p.wait() != 0:
             if Job.stop: raise Cancelled()
@@ -107,7 +116,7 @@ class Job:
             video_in, tag, target = self.plan_video(p, name)
             cmd = self.build_mux(p, video_in, tag, dst)
             self.log("Muxing final MP4...")
-            self.ffmpeg_progress(cmd, p["duration"])
+            self.ffmpeg_progress(cmd, p["duration"], 0 if video_in == self.src else P7_MUX)
             self.verify(dst, target)
         finally:
             shutil.rmtree(self.tmp, ignore_errors=True)
@@ -127,17 +136,21 @@ class Job:
             self.log("Profile 7 (Blu-ray) -> converting RPU to Profile 8.1, dropping enhancement layer...")
             self.progress(0)
             self.warn.append("Profile 7 EL discarded. If it was a FEL disc, some highlight detail is lost (HDR10 base layer is intact).")
-            return self.convert_p7(name), "hvc1", "8.1"
+            return self.convert_p7(name, p["duration"]), "hvc1", "8.1"
         if prof == 5:
             self.warn.append("Profile 5 kept as-is. No HDR10 fallback: the player MUST support DV Profile 5 or colors will be wrong (green/purple).")
             return self.src, "dvh1", "5"
         self.log(f"Profile {dv_label(p)} kept, direct remux."); return self.src, "hvc1", dv_label(p)
 
-    def convert_p7(self, name):
+    def convert_p7(self, name, duration):
         # fixed names: MP4Box rejects paths with "+" or unbalanced [ ] (common in release names)
         hevc = os.path.join(self.tmp, "video.hevc")
-        ff = self.popen(["ffmpeg", "-v", "error", "-i", self.src, "-map", "0:v:0", "-c:v", "copy",
-                         "-bsf:v", "hevc_mp4toannexb", "-f", "hevc", "-"], stdout=subprocess.PIPE, **NOWIN)
+        ff = self.popen(["ffmpeg", "-v", "error", "-progress", "pipe:2", "-nostats", "-i", self.src, "-map", "0:v:0", "-c:v", "copy",
+                         "-bsf:v", "hevc_mp4toannexb", "-f", "hevc", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, **NOWIN)
+        # ffmpeg only reads as fast as dovi_tool takes the pipe, so its position is dovi_tool's progress.
+        # Drained on a thread: a full stderr pipe would stall ffmpeg.
+        threading.Thread(target=self.track, args=((l.decode("utf-8", "replace") for l in ff.stderr), duration, 0, P7_DOVI),
+                         daemon=True).start()
         dt = self.popen(["dovi_tool", "-m", "2", "convert", "--discard", "-", "-o", hevc],
                         stdin=ff.stdout, stderr=subprocess.PIPE, text=True, errors="replace", **NOWIN)
         err = dt.stderr.read(); dt.wait()
@@ -155,6 +168,7 @@ class Job:
             if Job.stop: raise Cancelled()
             self.log(err[-2000:]); raise RuntimeError("MP4Box failed")
         os.remove(hevc)
+        self.progress(P7_MUX)
         return mp4
 
     def build_mux(self, p, video_in, tag, dst):
@@ -309,6 +323,7 @@ class App(TkBase):
         self.keep = {}            # (file, kind) -> set of stream indexes to keep
         self.state = {}           # file -> status word shown in the table
         self.running = False
+        self.t0 = 0       # when the current file started, for the clock next to the bar
         self.ck = {True: checkbox_image(True), False: checkbox_image(False)}
         self.ck_pad = (checkbox_image(False, 8), checkbox_image(True, 8))
 
@@ -527,7 +542,7 @@ class App(TkBase):
         self.log_btn.pack(side="right")
         self.status = ttk.Label(wrap, text="", style="Muted.TLabel")
         self.status.pack(side="right", padx=(0, 16))
-        self.pct = ttk.Label(wrap, text="", style="Muted.TLabel", width=4, anchor="e")
+        self.pct = ttk.Label(wrap, text="", style="Muted.TLabel", width=15, anchor="e")
         self.pct.pack(side="right")
         self.bar = ttk.Progressbar(wrap, maximum=100)
         self.bar.pack(side="left", fill="x", expand=True, padx=20)
@@ -736,9 +751,10 @@ class App(TkBase):
                     self.txt.see("end"); self.txt.config(state="disabled")
                     if tag == "bad": self.toggle_log(True)
                 elif k == "bar":
-                    self.bar["value"] = v; self.pct.config(text=f"{int(v)}%")
+                    self.bar["value"] = v
                 elif k == "state":
                     f, word = v
+                    if word == "converting": self.t0 = time.time()
                     self.state[f] = word
                     if f in self.files:
                         self.tree.item(f, values=self.row_values(f),
@@ -751,6 +767,9 @@ class App(TkBase):
                     self.running = False; self.status.config(text=v); self.bar["value"] = 0; self.pct.config(text="")
                     self.refresh()
         except queue.Empty: pass
+        if self.running and self.t0:    # ticks even when a step reports no progress, so it never looks frozen
+            s = int(time.time() - self.t0)
+            self.pct.config(text=f"{int(self.bar['value'])}%  ·  " + time.strftime("%H:%M:%S" if s >= 3600 else "%M:%S", time.gmtime(s)))
         try: self.after(100, self.pump)
         except tk.TclError: pass        # window closed
 
