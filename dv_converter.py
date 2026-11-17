@@ -527,6 +527,8 @@ class App(TkBase):
         self.log_btn.pack(side="right")
         self.status = ttk.Label(wrap, text="", style="Muted.TLabel")
         self.status.pack(side="right", padx=(0, 16))
+        self.pct = ttk.Label(wrap, text="", style="Muted.TLabel", width=4, anchor="e")
+        self.pct.pack(side="right")
         self.bar = ttk.Progressbar(wrap, maximum=100)
         self.bar.pack(side="left", fill="x", expand=True, padx=20)
 
@@ -734,7 +736,7 @@ class App(TkBase):
                     self.txt.see("end"); self.txt.config(state="disabled")
                     if tag == "bad": self.toggle_log(True)
                 elif k == "bar":
-                    self.bar["value"] = v
+                    self.bar["value"] = v; self.pct.config(text=f"{int(v)}%")
                 elif k == "state":
                     f, word = v
                     self.state[f] = word
@@ -746,7 +748,7 @@ class App(TkBase):
                 elif k == "status":
                     self.status.config(text=v)
                 elif k == "done":
-                    self.running = False; self.status.config(text=v); self.bar["value"] = 0
+                    self.running = False; self.status.config(text=v); self.bar["value"] = 0; self.pct.config(text="")
                     self.refresh()
         except queue.Empty: pass
         try: self.after(100, self.pump)
