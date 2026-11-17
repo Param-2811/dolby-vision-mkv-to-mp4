@@ -534,6 +534,12 @@ class App(TkBase):
     def build_actions(self):
         """Packed from the bottom so the primary action keeps its place on a short screen."""
         wrap = ttk.Frame(self); wrap.grid(row=7, column=0, sticky="ew", padx=24, pady=(10, 12))
+        # own line: sharing the button row, a long file name in the status squeezed the bar to nothing
+        line = ttk.Frame(wrap); line.pack(side="top", fill="x", pady=(0, 10))
+        self.pct = ttk.Label(line, text="", style="Muted.TLabel", width=15, anchor="e")
+        self.pct.pack(side="right")
+        self.bar = ttk.Progressbar(line, maximum=100)
+        self.bar.pack(side="left", fill="x", expand=True)
         self.go = ttk.Button(wrap, text="Convert", style="Primary.TButton", command=self.start)
         self.go.pack(side="left")
         self.stop_btn = ttk.Button(wrap, text="Stop", command=self.stop, state="disabled")
@@ -542,10 +548,6 @@ class App(TkBase):
         self.log_btn.pack(side="right")
         self.status = ttk.Label(wrap, text="", style="Muted.TLabel")
         self.status.pack(side="right", padx=(0, 16))
-        self.pct = ttk.Label(wrap, text="", style="Muted.TLabel", width=15, anchor="e")
-        self.pct.pack(side="right")
-        self.bar = ttk.Progressbar(wrap, maximum=100)
-        self.bar.pack(side="left", fill="x", expand=True, padx=20)
 
     def build_log(self):
         self.log_wrap = ttk.Frame(self)
