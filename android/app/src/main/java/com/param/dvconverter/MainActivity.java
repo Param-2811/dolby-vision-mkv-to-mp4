@@ -451,6 +451,7 @@ public class MainActivity extends Activity {
         ConvertService.queue = jobs;
         ConvertService.convertAudio = convertAudioOn();
         ConvertService.subs = prefs.getBoolean("subs", true);
+        ConvertService.deleteOriginal = prefs.getBoolean("delete", false);
         selected.clear();
         adapter.notifyDataSetChanged();
         startForegroundService(new Intent(this, ConvertService.class));
@@ -484,15 +485,16 @@ public class MainActivity extends Activity {
         TextView head = Ui.text(this, "Conversion settings", R.color.on_surface, 22, false);
         head.setPadding(dp(24), 0, dp(24), dp(8));
         body.addView(head);
-        body.addView(option("audio", "Convert audio to EAC3", "TrueHD, DTS and FLAC often won't play in MP4"));
-        body.addView(option("subs", "Include text subtitles", "Image subtitles can't be saved in MP4"));
+        body.addView(option("audio", "Convert audio to EAC3", "TrueHD, DTS and FLAC often won't play in MP4", true));
+        body.addView(option("subs", "Include text subtitles", "Image subtitles can't be saved in MP4", true));
+        body.addView(option("delete", "Delete the MKV after converting", "Only once the MP4 passes the Dolby Vision check", false));
         View pad = new View(this);
         body.addView(pad, new LinearLayout.LayoutParams(-1, dp(24)));
         Ui.sheet(this, body, null).show();
     }
 
-    private View option(String key, String title, String support) {
-        Switch s = Ui.materialSwitch(this, prefs.getBoolean(key, true));
+    private View option(String key, String title, String support, boolean def) {
+        Switch s = Ui.materialSwitch(this, prefs.getBoolean(key, def));
         return Ui.toggleRow(this, title, support, s, true, () -> {
             s.toggle();
             prefs.edit().putBoolean(key, s.isChecked()).apply();

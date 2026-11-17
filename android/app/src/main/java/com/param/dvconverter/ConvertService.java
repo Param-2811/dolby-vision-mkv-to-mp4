@@ -36,7 +36,7 @@ public class ConvertService extends Service {
     }
 
     static List<Job> queue = new ArrayList<>();
-    static boolean convertAudio = true, subs = true;
+    static boolean convertAudio = true, subs = true, deleteOriginal;
 
     static volatile boolean running, stop;
     static volatile int percent, position, total, savedCount, failedCount;
@@ -175,7 +175,7 @@ public class ConvertService extends Service {
 
         List<String> warn = new ArrayList<>();
         List<String> args = Pipeline.buildMux(j.info, j.src.getPath(), part.getPath(), j.skip, convertAudio, subs, warn);
-        boolean kept = false;
+        boolean kept = false, verified = false;
         try {
             log("Muxing final MP4...");
             Tools.ffmpeg(this, args, j.info.duration, v -> showPercent((int) v), proc);
@@ -183,7 +183,8 @@ public class ConvertService extends Service {
             String got = Pipeline.dvLabel(Tools.probe(this, part.getPath()));
             String want = Pipeline.dvLabel(j.info);
             log("Verify: DV profile in output = " + got + " (expected " + want + ") " + (got.equals(want) ? "OK" : "MISMATCH"));
-            if (!got.equals(want)) warn.add("Output DV profile does not match expectation. Check the log.");
+            verified = got.equals(want);
+            if (!verified) warn.add("Output DV profile does not match expectation. Check the log.");
             if (!part.renameTo(dst)) throw new IOException("Could not rename " + part);
             kept = true;
         } finally {
@@ -197,6 +198,13 @@ public class ConvertService extends Service {
         });
         scanned.await(5, TimeUnit.SECONDS);
         showPercent(100);
+        // only once the MP4 is renamed into place and its DV profile matched, so a bad output never costs the MKV
+        if (deleteOriginal && verified) {
+            if (j.src.delete()) {
+                log("Deleted original " + j.src.getName());
+                MediaScannerConnection.scanFile(this, new String[]{j.src.getPath()}, null, null);   // drops it from the gallery
+            } else warn.add("Could not delete the original MKV.");
+        } else if (deleteOriginal) warn.add("Original MKV kept because the output check failed.");
         for (String w : warn) log("WARNING: " + w);
         log("Done -> " + dst);
     }
