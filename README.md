@@ -93,7 +93,7 @@ honestly shows `0 of 1` instead of silently keeping the wrong one.*
 
 ## Install
 
-1. Download **DV-Converter-1.0.0-setup.exe** from [Releases](../../releases/latest).
+1. Download **DV-Converter-1.0.1-setup.exe** from [Releases](../../releases/latest).
 2. Run it. No admin password needed — it installs for your user only. (The first dialog can
    switch it to all users if you want that.)
 3. Start it from the Start menu.
@@ -107,8 +107,8 @@ To remove it: **Settings → Apps → DV Converter**.
 
 ### Android
 
-**DV-Converter-1.1.2-arm64.apk** is on the
-[Android release](../../releases/tag/android-v1.1.2) for ARM64 phones on Android 13 or newer.
+**DV-Converter-1.1.3-arm64.apk** is on the
+[Android release](../../releases/tag/android-v1.1.3) for ARM64 phones on Android 13 or newer.
 Open it on the phone and allow installing from that app. It is not on the Play Store, and it
 asks for All Files access because ffmpeg needs real file paths.
 
@@ -225,7 +225,7 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
 Downloads any missing tool into `tools\`, builds the exe with PyInstaller, and compiles
-`DV-Converter-1.0.0-setup.exe` with Inno Setup (installed via winget if you do not have it).
+`DV-Converter-1.0.1-setup.exe` with Inno Setup (installed via winget if you do not have it).
 Needs Python 3.10+ and internet on the first run. `dist\DV Converter\` is left behind as a
 portable copy if you prefer that to the installer.
 

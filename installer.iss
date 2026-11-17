@@ -1,7 +1,7 @@
 ; Inno Setup script for DV Converter. build.ps1 compiles this after PyInstaller;
 ; it packages whatever is in dist\DV Converter\.
 #define AppName    "DV Converter"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppExe     "DV Converter.exe"
 
 [Setup]

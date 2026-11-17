@@ -1,4 +1,4 @@
-<#  build.ps1 - makes dist\DV Converter\ (the app) and DV-Converter-1.0.0-setup.exe
+<#  build.ps1 - makes dist\DV Converter\ (the app) and DV-Converter-1.0.1-setup.exe
 
     Needs: Python 3.10+ on PATH, internet on the first run (it downloads ffmpeg,
     dovi_tool and hdr10plus_tool into tools\), and winget if MP4Box or Inno Setup is missing.
