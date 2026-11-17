@@ -134,7 +134,8 @@ class Job:
         self.log(f"Profile {dv_label(p)} kept, direct remux."); return self.src, "hvc1", dv_label(p)
 
     def convert_p7(self, name):
-        hevc = os.path.join(self.tmp, name + ".hevc")
+        # fixed names: MP4Box rejects paths with "+" or unbalanced [ ] (common in release names)
+        hevc = os.path.join(self.tmp, "video.hevc")
         ff = self.popen(["ffmpeg", "-v", "error", "-i", self.src, "-map", "0:v:0", "-c:v", "copy",
                          "-bsf:v", "hevc_mp4toannexb", "-f", "hevc", "-"], stdout=subprocess.PIPE, **NOWIN)
         dt = self.popen(["dovi_tool", "-m", "2", "convert", "--discard", "-", "-o", hevc],
@@ -145,7 +146,7 @@ class Job:
             if Job.stop: raise Cancelled()
             self.log(err[-2000:]); raise RuntimeError("dovi_tool failed")
         # community-verified tagging path (LG C2 / Apple TV): MP4Box for video only, ffmpeg for the final mux
-        mp4 = os.path.join(self.tmp, name + ".video.mp4")
+        mp4 = os.path.join(self.tmp, "video.mp4")
         self.log("Tagging DV 8.1 with MP4Box...")
         mb = self.popen(["MP4Box", "-add", f"{hevc}:dvp=8.1:hdr=none", "-brand", "mp42isom", "-ab", "dby1", "-no-iod",
                          "-tmp", self.tmp, "-new", mp4], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace", **NOWIN)
